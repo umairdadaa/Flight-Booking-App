@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { Ionicons } from 'react-native-vector-icons';
 
 const SearchFlightsScreen = ({ navigation }) => {
   React.useLayoutEffect(() => {
@@ -29,11 +30,17 @@ const SearchFlightsScreen = ({ navigation }) => {
   return (
     <LinearGradient colors={['#16697A', '#489FB5']} style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        <Text style={styles.title}>Find Your Next Flight</Text>
+        {/* Back Button and Heading */}
+        <View style={styles.headerContainer}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={24} color="#EDE7E3" />
+          </TouchableOpacity>
+          <Text style={styles.title}>Find Your Next Flight</Text>
+        </View>
 
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Origin</Text>
-          <TextInput
+          <TextInput 
             value={origin}
             onChangeText={setOrigin}
             style={styles.input}
@@ -97,12 +104,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 20,
   },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  backButton: {
+    marginRight: 10,
+  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#EDE7E3',
+    flex: 1, // This will allow the heading to take up available space
     textAlign: 'center',
-    marginBottom: 40,
   },
   inputContainer: {
     marginBottom: 20,
