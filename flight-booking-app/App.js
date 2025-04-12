@@ -7,6 +7,8 @@ import FlightListScreen from './src/screens/FlightListScreen';
 import FlightDetailsScreen from './src/screens/FlightDetailsScreen';
 import BookingScreen from './src/screens/BookingScreen';
 import ConfirmationScreen from './src/screens/ConfirmationScreen';
+import SearchFlightsScreen from './src/screens/SearchFlightsScreen';
+
 
 const Stack = createNativeStackNavigator();
 
@@ -19,6 +21,7 @@ export default function App() {
         <Stack.Screen name="FlightDetails" component={FlightDetailsScreen} />
         <Stack.Screen name="Booking" component={BookingScreen} />
         <Stack.Screen name="Confirmation" component={ConfirmationScreen} />
+        <Stack.Screen name="SearchFlightsScreen" component={SearchFlightsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
