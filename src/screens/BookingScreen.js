@@ -182,6 +182,16 @@ const BookingScreen = ({ navigation, route }) => {
         <TouchableOpacity style={styles.button} onPress={handleBooking}>
           <Text style={styles.buttonText}>Confirm Booking</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() =>
+            navigation.navigate("PaymentPage", {
+              selectedFlight: selectedFlight,
+            })
+          }
+        >
+          <Text style={styles.buttonText}>Make Payment</Text>
+        </TouchableOpacity>
       </ScrollView>
 
       {/* Modal for confirming passenger removal */}

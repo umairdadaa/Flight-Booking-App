@@ -8,8 +8,8 @@ import FlightDetailsScreen from "./src/screens/FlightDetailsScreen";
 import BookingScreen from "./src/screens/BookingScreen";
 import ConfirmationScreen from "./src/screens/ConfirmationScreen";
 import SearchFlightsScreen from "./src/screens/SearchFlightsScreen";
-import PaymentPage from "./src/screens/PaymentPage"; // Import the new PaymentPage
-
+import PaymentPage from "./src/screens/PaymentPage";
+import PaymentConfirmation from "./src/screens/PaymentConfirmation";
 const Stack = createNativeStackNavigator();
 
 export default function App() {
@@ -25,7 +25,11 @@ export default function App() {
           name="SearchFlightsScreen"
           component={SearchFlightsScreen}
         />
-        <Stack.Screen name="PaymentPage" component={PaymentPage} />{" "}
+        <Stack.Screen name="PaymentPage" component={PaymentPage} />
+        <Stack.Screen
+          name="PaymentConfirmation"
+          component={PaymentConfirmation}
+        />
         {/* Add PaymentPage to the stack */}
       </Stack.Navigator>
     </NavigationContainer>
