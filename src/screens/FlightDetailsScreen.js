@@ -1,8 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Button, TouchableOpacity, Modal, ScrollView } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import api from '../api';
-import { Ionicons } from 'react-native-vector-icons';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Button,
+  TouchableOpacity,
+  Modal,
+  ScrollView,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import api from "../api";
+import { Ionicons } from "react-native-vector-icons";
 
 export default function FlightDetailsScreen({ route, navigation }) {
   const { flightId, price } = route.params;
@@ -17,7 +25,7 @@ export default function FlightDetailsScreen({ route, navigation }) {
         setFlight(response.data);
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching flight details:', error);
+        console.error("Error fetching flight details:", error);
         setLoading(false);
       }
     };
@@ -43,17 +51,23 @@ export default function FlightDetailsScreen({ route, navigation }) {
 
   if (loading) {
     return (
-      <LinearGradient colors={['#16697A', '#489FB5']} style={styles.loadingContainer}>
+      <LinearGradient
+        colors={["#16697A", "#489FB5"]}
+        style={styles.loadingContainer}
+      >
         <Text style={styles.loadingText}>Loading flight details...</Text>
       </LinearGradient>
     );
   }
 
   return (
-    <LinearGradient colors={['#16697A', '#489FB5']} style={styles.container}>
+    <LinearGradient colors={["#16697A", "#489FB5"]} style={styles.container}>
       {/* Header Section with Back Button and Flight Details */}
       <View style={styles.headerContainer}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
           <Ionicons name="arrow-back" size={24} color="#EDE7E3" />
         </TouchableOpacity>
         <Text style={styles.heading}>Flight Details</Text>
@@ -63,34 +77,46 @@ export default function FlightDetailsScreen({ route, navigation }) {
       <ScrollView contentContainerStyle={styles.scrollViewContainer}>
         <View style={styles.flightInfoContainer}>
           <Text style={styles.flightInfoLabel}>From:</Text>
-          <Text style={styles.flightInfoValue}>{flight.origin.name} ({flight.origin.code})</Text>
+          <Text style={styles.flightInfoValue}>
+            {flight.origin.name} ({flight.origin.code})
+          </Text>
         </View>
 
         <View style={styles.flightInfoContainer}>
           <Text style={styles.flightInfoLabel}>To:</Text>
-          <Text style={styles.flightInfoValue}>{flight.destination.name} ({flight.destination.code})</Text>
+          <Text style={styles.flightInfoValue}>
+            {flight.destination.name} ({flight.destination.code})
+          </Text>
         </View>
 
         <View style={styles.flightInfoContainer}>
           <Text style={styles.flightInfoLabel}>Departure:</Text>
-          <Text style={styles.flightInfoValue}>{new Date(flight.departure_time).toLocaleString()}</Text>
+          <Text style={styles.flightInfoValue}>
+            {new Date(flight.departure_time).toLocaleString()}
+          </Text>
         </View>
 
         <View style={styles.flightInfoContainer}>
           <Text style={styles.flightInfoLabel}>Arrival:</Text>
-          <Text style={styles.flightInfoValue}>{new Date(flight.arrival_time).toLocaleString()}</Text>
+          <Text style={styles.flightInfoValue}>
+            {new Date(flight.arrival_time).toLocaleString()}
+          </Text>
         </View>
 
         <View style={styles.flightInfoContainer}>
           <Text style={styles.flightInfoLabel}>Status:</Text>
           <Text style={styles.flightInfoValue}>{flight.status}</Text>
         </View>
-        
+
         {/* Booking Button */}
         <View style={styles.buttonContainer}>
           <Button title="Book Now" onPress={handleBookNow} color="#FFA62B" />
           {/* Use the one below to activate the booking feature */}
-        {/* <Button title="Book Now" onPress={() => navigation.navigate('Booking', { flightId })} color="#FFA62B" /> */}
+          <Button
+            title="Book Now"
+            onPress={() => navigation.navigate("Booking", { flightId })}
+            color="#FFA62B"
+          />
         </View>
       </ScrollView>
 
@@ -104,7 +130,9 @@ export default function FlightDetailsScreen({ route, navigation }) {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Feature Not Implemented Yet</Text>
-            <Text style={styles.modalMessage}>We are working on this feature. Stay tuned!</Text>
+            <Text style={styles.modalMessage}>
+              We are working on this feature. Stay tuned!
+            </Text>
             <Button title="Close" onPress={handleCloseModal} color="#FFA62B" />
           </View>
         </View>
@@ -121,17 +149,17 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   loadingText: {
     fontSize: 18,
-    color: '#EDE7E3',
+    color: "#EDE7E3",
   },
   headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 40,
     marginBottom: 20,
   },
@@ -140,62 +168,62 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#EDE7E3',
-    textAlign: 'center',
+    fontWeight: "bold",
+    color: "#EDE7E3",
+    textAlign: "center",
     flex: 1,
   },
   scrollViewContainer: {
     flexGrow: 1,
-    justifyContent: 'center', // Vertically center the content
+    justifyContent: "center", // Vertically center the content
     paddingBottom: 40, // Ensure the button is not cut off
   },
   flightInfoContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
     paddingVertical: 10,
   },
   flightInfoLabel: {
     fontSize: 18,
-    color: '#EDE7E3',
-    fontWeight: 'bold',
+    color: "#EDE7E3",
+    fontWeight: "bold",
   },
   flightInfoValue: {
     fontSize: 18,
-    color: '#EDE7E3',
+    color: "#EDE7E3",
     flex: 1,
-    textAlign: 'right',
+    textAlign: "right",
   },
   buttonContainer: {
     marginTop: 30,
-    width: '100%',
+    width: "100%",
     borderRadius: 10,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   modalContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
-    width: '80%',
+    width: "80%",
     padding: 20,
-    backgroundColor: '#EDE7E3',
+    backgroundColor: "#EDE7E3",
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   modalTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: '#16697A',
+    fontWeight: "bold",
+    color: "#16697A",
     marginBottom: 10,
   },
   modalMessage: {
     fontSize: 18,
-    color: '#489FB5',
+    color: "#489FB5",
     marginBottom: 20,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });

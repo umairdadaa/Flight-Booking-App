@@ -1,72 +1,124 @@
-// src/screens/BookingScreen.js
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
-import api from '../api';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Alert,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 
-export default function BookingScreen({ route, navigation }) {
-  const { flightId } = route.params;
-  const [passengers, setPassengers] = useState([{ full_name: '', passport_number: '' }]);
-  const [paymentMethod, setPaymentMethod] = useState('Credit Card');
-  const [loading, setLoading] = useState(false);
+const BookingScreen = ({ navigation, route }) => {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
 
-  const handleAddPassenger = () => {
-    setPassengers([...passengers, { full_name: '', passport_number: '' }]);
-  };
-
-  const handleBooking = async () => {
-    setLoading(true);
-    try {
-      const response = await api.post('/book', { userId: 1, flightId, passengers, seatClassId: 1, paymentMethod });
-      navigation.navigate('Confirmation', { bookingId: response.data.bookingId });
-    } catch (error) {
-      console.error('Error booking flight:', error);
-    } finally {
-      setLoading(false);
+  const handleBooking = () => {
+    if (!name || !email || !phone) {
+      Alert.alert("Please fill out all fields");
+      return;
     }
+    // Here you'd normally send booking data to the backend
+    Alert.alert("Success", "Your flight has been booked!");
+    navigation.navigate("Home"); // Go back to home after booking
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.heading}>Booking Flight</Text>
-      {passengers.map((passenger, index) => (
-        <View key={index} style={styles.passengerForm}>
+    <LinearGradient colors={["#16697A", "#489FB5"]} style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        <Text style={styles.title}>Passenger Details</Text>
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Full Name</Text>
           <TextInput
+            value={name}
+            onChangeText={setName}
             style={styles.input}
-            placeholder="Full Name"
-            value={passenger.full_name}
-            onChangeText={(text) => {
-              const newPassengers = [...passengers];
-              newPassengers[index].full_name = text;
-              setPassengers(newPassengers);
-            }}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Passport Number"
-            value={passenger.passport_number}
-            onChangeText={(text) => {
-              const newPassengers = [...passengers];
-              newPassengers[index].passport_number = text;
-              setPassengers(newPassengers);
-            }}
+            placeholder="Enter your full name"
+            placeholderTextColor="#EDE7E3"
           />
         </View>
-      ))}
-      <Button title="Add Passenger" onPress={handleAddPassenger} />
-      <TextInput
-        style={styles.input}
-        placeholder="Payment Method"
-        value={paymentMethod}
-        onChangeText={setPaymentMethod}
-      />
-      <Button title={loading ? "Booking..." : "Confirm Booking"} onPress={handleBooking} disabled={loading} />
-    </View>
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Email</Text>
+          <TextInput
+            value={email}
+            onChangeText={setEmail}
+            style={styles.input}
+            placeholder="Enter your email"
+            placeholderTextColor="#EDE7E3"
+          />
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Phone Number</Text>
+          <TextInput
+            value={phone}
+            onChangeText={setPhone}
+            style={styles.input}
+            placeholder="Enter your phone number"
+            placeholderTextColor="#EDE7E3"
+            keyboardType="phone-pad"
+          />
+        </View>
+
+        <TouchableOpacity style={styles.button} onPress={handleBooking}>
+          <Text style={styles.buttonText}>Confirm Booking</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </LinearGradient>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
-  heading: { fontSize: 24, marginBottom: 20 },
-  passengerForm: { marginBottom: 15 },
-  input: { borderWidth: 1, borderColor: '#ccc', padding: 10, marginBottom: 10, borderRadius: 5 },
+  container: {
+    flex: 1,
+    padding: 20,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    paddingVertical: 20,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#EDE7E3",
+    textAlign: "center",
+    marginBottom: 40,
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    color: "#EDE7E3",
+    marginBottom: 8,
+  },
+  input: {
+    height: 50,
+    borderColor: "#EDE7E3",
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingLeft: 15,
+    fontSize: 16,
+    color: "#EDE7E3",
+    backgroundColor: "#489FB5",
+  },
+  button: {
+    backgroundColor: "#FFA62B",
+    paddingVertical: 15,
+    borderRadius: 25,
+    alignItems: "center",
+    marginTop: 30,
+  },
+  buttonText: {
+    color: "#EDE7E3",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
 });
+
+export default BookingScreen;
