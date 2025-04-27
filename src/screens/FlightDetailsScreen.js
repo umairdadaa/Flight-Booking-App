@@ -17,6 +17,7 @@ export default function FlightDetailsScreen({ route, navigation }) {
   const [flight, setFlight] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false); // State to control modal visibility
+  const [selectedClass, setSelectedClass] = useState(null); // State to store selected class (Economy or Business)
 
   useEffect(() => {
     const fetchFlightDetails = async () => {
@@ -47,6 +48,25 @@ export default function FlightDetailsScreen({ route, navigation }) {
   const handleCloseModal = () => {
     // Close the modal when the "Close" button is pressed
     setIsModalVisible(false);
+  };
+
+  const handleSelectClass = (seatClassId) => {
+    // Store selected class and close modal
+    setSelectedClass(seatClassId);
+    setIsModalVisible(false);
+    // Find the selected seat class from the fetched flight data
+    const selectedSeatClass = flight.flightSeats.find(
+      (seat) => seat.seatClass.id === seatClassId
+    );
+
+    // Send selected flight data along with the seat class
+    const selectedFlight = {
+      seatClassId: selectedSeatClass.seatClass.id,
+      flightId: flight.id,
+    };
+    console.log("Selected Flight Data:", selectedFlight);
+    // Optionally, navigate to booking screen with selectedFlight data
+    navigation.navigate("Booking", { selectedFlight });
   };
 
   if (loading) {
@@ -108,19 +128,13 @@ export default function FlightDetailsScreen({ route, navigation }) {
           <Text style={styles.flightInfoValue}>{flight.status}</Text>
         </View>
 
-        {/* Booking Button */}
+        {/* Book Now Button */}
         <View style={styles.buttonContainer}>
           <Button title="Book Now" onPress={handleBookNow} color="#FFA62B" />
-          {/* Use the one below to activate the booking feature */}
-          <Button
-            title="Book Now"
-            onPress={() => navigation.navigate("Booking", { flightId })}
-            color="#FFA62B"
-          />
         </View>
       </ScrollView>
 
-      {/* Modal for feature not implemented */}
+      {/* Modal for selecting class */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -129,10 +143,23 @@ export default function FlightDetailsScreen({ route, navigation }) {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Feature Not Implemented Yet</Text>
-            <Text style={styles.modalMessage}>
-              We are working on this feature. Stay tuned!
-            </Text>
+            <Text style={styles.modalTitle}>Select Seat Class</Text>
+            {/* Economy Class Button */}
+            <Button
+              title={`Economy Class - $${flight.base_price}`}
+              onPress={() =>
+                handleSelectClass(flight.flightSeats[1].seatClass.id)
+              } // Economy seatClassId
+              color="#16697A"
+            />
+            {/* Business Class Button */}
+            <Button
+              title={`Business Class - $${(flight.base_price * 2).toFixed(2)}`} // Multiply by 2 for Business class price
+              onPress={() =>
+                handleSelectClass(flight.flightSeats[0].seatClass.id)
+              } // Business seatClassId
+              color="#16697A"
+            />
             <Button title="Close" onPress={handleCloseModal} color="#FFA62B" />
           </View>
         </View>
@@ -219,11 +246,5 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#16697A",
     marginBottom: 10,
-  },
-  modalMessage: {
-    fontSize: 18,
-    color: "#489FB5",
-    marginBottom: 20,
-    textAlign: "center",
   },
 });
