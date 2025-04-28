@@ -3,58 +3,68 @@ import {
   View,
   Text,
   TextInput,
-  Button,
-  StyleSheet,
   TouchableOpacity,
   Modal,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Animated,
+  StyleSheet,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import api from "../api"; // Assuming you have an 'api' module for making API calls
 
 export default function PaymentPage() {
-  const [paymentMethod, setPaymentMethod] = useState("creditCard");
-  const [cardDetails, setCardDetails] = useState({
-    name: "",
-    cardNumber: "",
-    expiry: "",
-    cvv: "",
-  });
-  const [paypalDetails, setPaypalDetails] = useState({
-    email: "",
-    password: "",
-  });
-  const [loading, setLoading] = useState(false);
+  const route = useRoute();
+  const { bookingData, full_name } = route.params; // Access the bookingData passed from BookingScreen
   const navigation = useNavigation();
 
-  const handleSubmit = () => {
+
+  const [paymentMethod, setPaymentMethod] = useState(
+    bookingData.paymentMethod || "creditCard"
+  );
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async () => {
+    const updatedBookingData = {
+      ...bookingData,
+      paymentMethod: paymentMethod, // Update payment method based on user selection
+    };
+
+    console.log(updatedBookingData); // Log the updated bookingData
+
     setLoading(true);
-    // Simulate API call with a timeout
-    setTimeout(() => {
-      setLoading(false);
-      navigation.navigate("PaymentConfirmation");
-    }, 3000); // Simulate loading for 3 seconds
+
+    try {
+      // Send the booking data to the backend for processing the payment
+      const response = await api.post("/flights/book", updatedBookingData);
+
+      console.log("Payment Success Response:", response.data); // Log the successful response
+
+      // Extracting the necessary values
+    //   const { full_name } = bookingData.passengers[0]; // Get full_name from the first passenger
+      const { bookingReference } = response.data; // Get bookingReference from the response
+        console.log(full_name);
+        
+      // Navigate to the PaymentConfirmation screen with only the necessary data
+      navigation.navigate("PaymentConfirmation", {
+        fullName: full_name,
+        bookingReference: bookingReference,
+      });
+    } catch (error) {
+      console.error("Payment API Error:", error); // Log any error from the API call
+    } finally {
+      setLoading(false); // Hide loading spinner once API call completes
+    }
   };
 
   const renderCreditCardForm = () => (
     <View style={styles.form}>
       <Text style={styles.label}>Name on Card</Text>
-      <TextInput
-        style={styles.input}
-        value={cardDetails.name}
-        onChangeText={(text) => setCardDetails({ ...cardDetails, name: text })}
-        placeholder="John Doe"
-      />
+      <TextInput style={styles.input} placeholder="John Doe" />
       <Text style={styles.label}>Card Number</Text>
       <TextInput
         style={styles.input}
-        value={cardDetails.cardNumber}
-        onChangeText={(text) =>
-          setCardDetails({ ...cardDetails, cardNumber: text })
-        }
         placeholder="1234 5678 1234 5678"
         keyboardType="numeric"
       />
@@ -63,10 +73,6 @@ export default function PaymentPage() {
           <Text style={styles.label}>Expiry</Text>
           <TextInput
             style={styles.input}
-            value={cardDetails.expiry}
-            onChangeText={(text) =>
-              setCardDetails({ ...cardDetails, expiry: text })
-            }
             placeholder="MM/YY"
             keyboardType="numeric"
           />
@@ -75,55 +81,21 @@ export default function PaymentPage() {
           <Text style={styles.label}>CVV</Text>
           <TextInput
             style={styles.input}
-            value={cardDetails.cvv}
-            onChangeText={(text) =>
-              setCardDetails({ ...cardDetails, cvv: text })
-            }
             placeholder="123"
             keyboardType="numeric"
             secureTextEntry
           />
         </View>
       </View>
-      <Text style={styles.cardInfo}>
-        {`Card Type: ${
-          cardDetails.cardNumber.startsWith("4")
-            ? "Visa®"
-            : cardDetails.cardNumber.startsWith("5") ||
-              cardDetails.cardNumber.startsWith("2")
-            ? "Mastercard®"
-            : cardDetails.cardNumber.startsWith("34") ||
-              cardDetails.cardNumber.startsWith("37")
-            ? "American Express®"
-            : cardDetails.cardNumber.startsWith("6")
-            ? "Discover®"
-            : "Unknown"
-        }`}
-      </Text>
     </View>
   );
 
   const renderPaypalForm = () => (
     <View style={styles.form}>
       <Text style={styles.label}>PayPal Email</Text>
-      <TextInput
-        style={styles.input}
-        value={paypalDetails.email}
-        onChangeText={(text) =>
-          setPaypalDetails({ ...paypalDetails, email: text })
-        }
-        placeholder="email@example.com"
-      />
+      <TextInput style={styles.input} placeholder="email@example.com" />
       <Text style={styles.label}>PayPal Password</Text>
-      <TextInput
-        style={styles.input}
-        value={paypalDetails.password}
-        onChangeText={(text) =>
-          setPaypalDetails({ ...paypalDetails, password: text })
-        }
-        placeholder="••••••••"
-        secureTextEntry
-      />
+      <TextInput style={styles.input} placeholder="••••••••" secureTextEntry />
     </View>
   );
 
@@ -231,12 +203,6 @@ const styles = StyleSheet.create({
   },
   halfInput: {
     width: "48%",
-  },
-  cardInfo: {
-    fontSize: 14,
-    color: "#16697A",
-    marginTop: 10,
-    fontStyle: "italic",
   },
   switchContainer: {
     flexDirection: "row",

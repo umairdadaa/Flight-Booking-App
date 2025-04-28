@@ -29,6 +29,16 @@ const BookingScreen = ({ navigation, route }) => {
   const [passengerToRemove, setPassengerToRemove] = useState(null);
 
   const handlePassengerChange = (index, field, value) => {
+    // If the field is 'age', try to convert it to an integer
+    if (field === "age") {
+      // Only update 'age' if it's a valid number
+      value = parseInt(value, 10);
+      if (isNaN(value)) {
+        // If it's not a valid number, keep it empty or handle the error
+        value = "";
+      }
+    }
+
     const updatedPassengers = [...passengers];
     updatedPassengers[index][field] = value;
     setPassengers(updatedPassengers);
@@ -52,12 +62,35 @@ const BookingScreen = ({ navigation, route }) => {
     setPassengers(updatedPassengers);
   };
 
-  const handleBooking = () => {
+  // const handleBooking = () => {
+  //   if (passengers.some((p) => !p.fullName || !p.passportNumber || !p.age)) {
+  //     Alert.alert("Please fill out all fields for all passengers");
+  //     return;
+  //   }
+
+  //   const bookingData = {
+  //     flightId: selectedFlight.flightId,
+  //     seatClassId: selectedFlight.seatClassId,
+  //     userId: "uuid1", // Assuming we have a user ID
+  //     passengers: passengers.map(({ expanded, ...info }) => ({
+  //       full_name: info.fullName,
+  //       passport_number: info.passportNumber,
+  //       age: info.age,
+  //     })),
+  //     paymentMethod: "", // Just as an example
+  //   };
+
+  //   console.log("Booking Data:", bookingData);
+
+  //   Alert.alert("Success", "Your flight has been booked!");
+  //   navigation.navigate("Home");
+  // };
+  // Inside the BookingScreen component
+  const handleMakePayment = () => {
     if (passengers.some((p) => !p.fullName || !p.passportNumber || !p.age)) {
       Alert.alert("Please fill out all fields for all passengers");
       return;
     }
-
     const bookingData = {
       flightId: selectedFlight.flightId,
       seatClassId: selectedFlight.seatClassId,
@@ -67,13 +100,14 @@ const BookingScreen = ({ navigation, route }) => {
         passport_number: info.passportNumber,
         age: info.age,
       })),
-      paymentMethod: "Credit Card", // Just as an example
+      paymentMethod: "paymentMethod", // Set payment method based on user's selection
     };
 
-    console.log("Booking Data:", bookingData);
+    const { full_name } = bookingData.passengers[0];
+    console.log(full_name);
 
-    Alert.alert("Success", "Your flight has been booked!");
-    navigation.navigate("Home");
+    // Navigate to the payment page and pass bookingData
+    navigation.navigate("PaymentPage", { bookingData,full_name });
   };
 
   const removePassenger = (index) => {
@@ -179,10 +213,13 @@ const BookingScreen = ({ navigation, route }) => {
           <Text style={styles.addButtonText}>+ Add Passenger</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={handleBooking}>
+        {/* <TouchableOpacity style={styles.button} onPress={handleBooking}>
+          <Text style={styles.buttonText}>Confirm Booking</Text>
+        </TouchableOpacity> */}
+        <TouchableOpacity style={styles.button} onPress={handleMakePayment}>
           <Text style={styles.buttonText}>Confirm Booking</Text>
         </TouchableOpacity>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.button}
           onPress={() =>
             navigation.navigate("PaymentPage", {
@@ -191,7 +228,7 @@ const BookingScreen = ({ navigation, route }) => {
           }
         >
           <Text style={styles.buttonText}>Make Payment</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </ScrollView>
 
       {/* Modal for confirming passenger removal */}

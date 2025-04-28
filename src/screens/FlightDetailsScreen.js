@@ -6,7 +6,7 @@ import {
   Button,
   TouchableOpacity,
   Modal,
-  ScrollView,
+  ScrollView,ActivityIndicator
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import api from "../api";
@@ -71,11 +71,9 @@ export default function FlightDetailsScreen({ route, navigation }) {
 
   if (loading) {
     return (
-      <LinearGradient
-        colors={["#16697A", "#489FB5"]}
-        style={styles.loadingContainer}
-      >
-        <Text style={styles.loadingText}>Loading flight details...</Text>
+      <LinearGradient colors={['#16697A', '#489FB5']} style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#FFA62B" />
+        <Text style={styles.loadingText}>Loading flights Details...</Text>
       </LinearGradient>
     );
   }

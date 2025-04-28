@@ -1,19 +1,16 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import React from "react";
+import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 
 const HomeScreen = ({ navigation }) => {
   React.useLayoutEffect(() => {
     navigation.setOptions({
-      headerShown: false,  // Hide the default header
+      headerShown: false, // Hide the default header
     });
   }, [navigation]);
 
   return (
-    <LinearGradient
-      colors={['#16697A', '#489FB5']}
-      style={styles.container}
-    >
+    <LinearGradient colors={["#16697A", "#489FB5"]} style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerText}>Welcome to Your Luxurious Journey</Text>
       </View>
@@ -21,7 +18,9 @@ const HomeScreen = ({ navigation }) => {
       {/* Image section */}
       <View style={styles.imageContainer}>
         <Image
-          source={{ uri: 'https://www.freeiconspng.com/uploads/plane-travel-flight-tourism-travel-icon-png-10.png' }}
+          source={{
+            uri: "https://www.freeiconspng.com/uploads/plane-travel-flight-tourism-travel-icon-png-10.png",
+          }}
           style={styles.image}
         />
       </View>
@@ -30,11 +29,19 @@ const HomeScreen = ({ navigation }) => {
         <Text style={styles.title}>Find the Best Flights</Text>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => navigation.navigate('SearchFlightsScreen')}
+          onPress={() => navigation.navigate("SearchFlightsScreen")}
         >
           <Text style={styles.buttonText}>Start Booking</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Smaller, Subtle Menu Button with adjusted width */}
+      <TouchableOpacity
+        style={styles.menuButton}
+        onPress={() => navigation.navigate("MenuScreen")}
+      >
+        <Text style={styles.menuButtonText}>Menu</Text>
+      </TouchableOpacity>
 
       <View style={styles.footer}>
         <Text style={styles.footerText}>Made by Umair Dada</Text>
@@ -46,59 +53,77 @@ const HomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingTop: 150,
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   headerText: {
     fontSize: 30,
-    fontWeight: 'bold',
-    color: '#EDE7E3',
-    textAlign: 'center',
+    fontWeight: "bold",
+    color: "#EDE7E3",
+    textAlign: "center",
   },
   imageContainer: {
-    alignItems: 'center',
-    marginVertical:50,
+    alignItems: "center",
+    marginVertical: 50,
   },
   image: {
     width: 250,
     height: 250,
-    resizeMode: 'contain',
+    resizeMode: "contain",
   },
   content: {
-    alignItems: 'center',
+    alignItems: "center",
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   title: {
     fontSize: 24,
-    fontWeight: '600',
-    color: '#EDE7E3',
+    fontWeight: "600",
+    color: "#EDE7E3",
     marginBottom: 30,
     marginTop: -150,
   },
   button: {
-    backgroundColor: '#FFA62B',
+    backgroundColor: "#FFA62B",
     paddingVertical: 15,
     paddingHorizontal: 40,
     borderRadius: 25,
-    alignItems: 'center',
+    alignItems: "center",
   },
   buttonText: {
-    color: '#EDE7E3',
+    color: "#EDE7E3",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
+  },
+  // Smaller and Subtle Menu Button with adjusted width
+  menuButton: {
+    backgroundColor: "#16697A",
+    paddingVertical: 10,
+    paddingHorizontal: 30,
+    borderRadius: 20,
+    alignItems: "center",
+    marginTop: 15, // Adjusted spacing
+    borderWidth: 1,
+    borderColor: "#EDE7E3",
+    width: "auto", // Ensures button width is auto to fit content
+    alignSelf: "center", // Centers the button horizontally
+  },
+  menuButtonText: {
+    color: "#EDE7E3",
+    fontSize: 14, // Reduced font size
+    fontWeight: "500", // Lightened the text for a more subtle feel
   },
   footer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
   footerText: {
     fontSize: 16,
-    color: '#EDE7E3',
+    color: "#EDE7E3",
   },
 });
 
