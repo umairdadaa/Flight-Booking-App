@@ -16,7 +16,7 @@ export default function MenuScreen() {
   };
 
   const handleViewBooking = () => {
-    navigation.navigate("ViewBooking");
+    navigation.navigate("ViewBookingScreen");
   };
 
   React.useLayoutEffect(() => {
