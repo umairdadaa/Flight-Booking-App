@@ -8,11 +8,11 @@ export default function MenuScreen() {
   const navigation = useNavigation();
 
   const handleCancelFlight = () => {
-    navigation.navigate("CancelFlight");
+    navigation.navigate("CancelBookingScreen");
   };
 
   const handleCheckIn = () => {
-    navigation.navigate("CheckInOnline");
+    navigation.navigate("CheckInScreen");
   };
 
   const handleViewBooking = () => {
