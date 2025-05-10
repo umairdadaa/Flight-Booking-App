@@ -385,6 +385,13 @@ export default function CheckInScreen({ navigation }) {
           duration={800}
           style={styles.header}
         >
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="arrow-back" size={28} color="#FFF" />
+          </TouchableOpacity>
           <View style={styles.headerContent}>
             <Text style={styles.title}>Online Check-In</Text>
             <Text style={styles.subtitle}>Complete your check-in process</Text>
@@ -853,5 +860,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     marginLeft: 10,
+  },
+  backButton: {
+    marginRight: 15,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.2)",
   },
 });
