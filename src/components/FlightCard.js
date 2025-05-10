@@ -1,74 +1,68 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import React from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
+import { Ionicons } from "react-native-vector-icons";
 
 export default function FlightCard({ flight, onPress }) {
-  // Format date and time
-  const formatDateTime = (iso) => {
-    const date = new Date(iso);
-    return date.toLocaleString(undefined, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
+  const formatTime = (iso) => {
+    return new Date(iso).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
-  // Calculate flight duration in hours and minutes
   const calculateDuration = (departureTime, arrivalTime) => {
     const departure = new Date(departureTime);
     const arrival = new Date(arrivalTime);
     const duration = new Date(arrival - departure);
     const hours = duration.getUTCHours();
     const minutes = duration.getUTCMinutes();
-    return `${hours}hrs ${minutes}min`;
+    return `${hours}h ${minutes}m`;
   };
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress}>
-      {/* Airline Logo */}
-      {flight.airline.logo && (
-        <Image source={{ uri: flight.airline.logo }} style={styles.logo} />
-      )}
-      
-      <Text style={styles.airline}>
-        {flight.airline.name} ({flight.flight_number})
-      </Text>
-
-      <View style={styles.routeRow}>
-        <Text style={styles.city}>
-          {flight.origin.city} ({flight.origin.code})
-        </Text>
-        <Text style={styles.arrow}>→</Text>
-        <Text style={styles.city}>
-          {flight.destination.city} ({flight.destination.code})
-        </Text>
+      <View style={styles.cardHeader}>
+        {flight.airline.logo && (
+          <Image source={{ uri: flight.airline.logo }} style={styles.logo} />
+        )}
+        <Text style={styles.airlineName}>{flight.airline.name}</Text>
+        <Text style={styles.flightNumber}>{flight.flight_number}</Text>
       </View>
 
-      <Text style={styles.detail}>
-        Departure: <Text style={styles.highlight}>{formatDateTime(flight.departure_time)}</Text>
-      </Text>
-      <Text style={styles.detail}>
-        Arrival: <Text style={styles.highlight}>{formatDateTime(flight.arrival_time)}</Text>
-      </Text>
+      <View style={styles.routeContainer}>
+        <View style={styles.timeBlock}>
+          <Text style={styles.time}>{formatTime(flight.departure_time)}</Text>
+          <Text style={styles.airportCode}>{flight.origin.code}</Text>
+        </View>
 
-      {/* Flight Duration */}
-      <Text style={styles.detail}>
-        Duration: <Text style={styles.highlight}>{calculateDuration(flight.departure_time, flight.arrival_time)}</Text>
-      </Text>
-
-      <Text style={styles.detail}>
-        Price: <Text style={styles.highlight}>$ {flight.base_price}</Text>
-      </Text>
-
-      <Text style={styles.detail}>
-        Seats:{" "}
-        {flight.flightSeats.map((seat) => (
-          <Text key={seat.id} style={styles.seatInfo}>
-            {seat.seatClass.name} ({seat.available_seats}){" "}
+        <View style={styles.durationContainer}>
+          <View style={styles.durationLine} />
+          <Text style={styles.durationText}>
+            {calculateDuration(flight.departure_time, flight.arrival_time)}
           </Text>
-        ))}
-      </Text>
+          <View style={styles.durationLine} />
+        </View>
 
-      <View style={styles.buttonWrapper}>
-        <Text style={styles.buttonText}>View Details</Text>
+        <View style={styles.timeBlock}>
+          <Text style={styles.time}>{formatTime(flight.arrival_time)}</Text>
+          <Text style={styles.airportCode}>{flight.destination.code}</Text>
+        </View>
+      </View>
+
+      <View style={styles.divider} />
+
+      <View style={styles.footer}>
+        <View style={styles.priceContainer}>
+          <Text style={styles.priceLabel}>Price from</Text>
+          <Text style={styles.price}>
+            ${Number(flight.base_price).toFixed(2)}
+          </Text>
+        </View>
+
+        <View style={styles.detailsButton}>
+          <Text style={styles.detailsButtonText}>Details</Text>
+          <Ionicons name="chevron-forward" size={16} color="#EDE7E3" />
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -76,68 +70,113 @@ export default function FlightCard({ flight, onPress }) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#489FB5', // Light Teal
-    borderRadius: 16,
+    backgroundColor: "#EDE7E3",
+    borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowColor: "#16697A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
     elevation: 4,
   },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
   logo: {
-    width: 50,
-    height: 50,
-    marginBottom: 10,
-    alignSelf: 'center',
+    width: 32,
+    height: 32,
+    marginRight: 8,
   },
-  airline: {
+  airlineName: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#EDE7E3', // Light Beige
-    marginBottom: 8,
-    textAlign: 'center',
+    fontWeight: "600",
+    color: "#16697A",
+    marginRight: 8,
   },
-  routeRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  city: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#16697A', // Dark Teal
-  },
-  arrow: {
-    marginHorizontal: 8,
-    fontSize: 18,
-    color: '#16697A', // Dark Teal
-  },
-  detail: {
+  flightNumber: {
     fontSize: 14,
-    color: '#16697A', // Dark Teal
+    color: "#489FB5",
+    fontWeight: "500",
+  },
+  routeContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  timeBlock: {
+    alignItems: "center",
+    flex: 1,
+  },
+  time: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#16697A",
     marginBottom: 4,
+    textAlign: "center",
   },
-  highlight: {
-    fontWeight: 'bold',
-    color: '#FFA62B', // Yellow-Orange
-  },
-  seatInfo: {
-    fontWeight: '600',
-    color: '#16697A', // Dark Teal
-  },
-  buttonWrapper: {
-    marginTop: 12,
-    backgroundColor: '#FFA62B', // Yellow-Orange
-    paddingVertical: 8,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#EDE7E3', // Light Beige
-    fontWeight: 'bold',
+  airportCode: {
     fontSize: 14,
+    fontWeight: "600",
+    color: "#489FB5",
+  },
+  durationContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+    justifyContent: "center",
+  },
+  durationLine: {
+    height: 1,
+    backgroundColor: "#489FB5",
+    flex: 1,
+    opacity: 0.5,
+  },
+  durationText: {
+    fontSize: 12,
+    color: "#16697A",
+    marginHorizontal: 8,
+    fontWeight: "500",
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#489FB5",
+    opacity: 0.2,
+    marginBottom: 12,
+  },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  priceContainer: {
+    flexDirection: "column",
+  },
+  priceLabel: {
+    fontSize: 12,
+    color: "#489FB5",
+    marginBottom: 2,
+  },
+  price: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#FFA62B",
+  },
+  detailsButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#489FB5",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+  },
+  detailsButtonText: {
+    color: "#EDE7E3",
+    fontWeight: "600",
+    fontSize: 14,
+    marginRight: 4,
   },
 });

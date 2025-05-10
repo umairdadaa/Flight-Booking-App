@@ -3,21 +3,25 @@ import {
   View,
   Text,
   StyleSheet,
-  Button,
   TouchableOpacity,
-  Modal,
-  ScrollView,ActivityIndicator
+  ScrollView,
+  ActivityIndicator,
+  Animated,
+  Dimensions
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons, MaterialIcons, FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
 import api from "../api";
-import { Ionicons } from "react-native-vector-icons";
+import LottieView from "lottie-react-native";
+import * as Animatable from 'react-native-animatable';
+
+const { width } = Dimensions.get('window');
 
 export default function FlightDetailsScreen({ route, navigation }) {
-  const { flightId, price } = route.params;
+  const { flightId } = route.params;
   const [flight, setFlight] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isModalVisible, setIsModalVisible] = useState(false); // State to control modal visibility
-  const [selectedClass, setSelectedClass] = useState(null); // State to store selected class (Economy or Business)
+  const fadeAnim = useState(new Animated.Value(0))[0];
 
   useEffect(() => {
     const fetchFlightDetails = async () => {
@@ -25,6 +29,11 @@ export default function FlightDetailsScreen({ route, navigation }) {
         const response = await api.get(`/flights/${flightId}`);
         setFlight(response.data);
         setLoading(false);
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true
+        }).start();
       } catch (error) {
         console.error("Error fetching flight details:", error);
         setLoading(false);
@@ -34,134 +43,212 @@ export default function FlightDetailsScreen({ route, navigation }) {
     fetchFlightDetails();
   }, [flightId]);
 
-  React.useLayoutEffect(() => {
-    navigation.setOptions({
-      headerShown: false, // Hides the default header
+  const formatTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString([], {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
     });
-  }, [navigation]);
-
-  const handleBookNow = () => {
-    // Show the modal when the "Book Now" button is pressed
-    setIsModalVisible(true);
   };
 
-  const handleCloseModal = () => {
-    // Close the modal when the "Close" button is pressed
-    setIsModalVisible(false);
+  const calculateDuration = (departure, arrival) => {
+    const diff = new Date(arrival) - new Date(departure);
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}h ${minutes}m`;
   };
 
-  const handleSelectClass = (seatClassId) => {
-    // Store selected class and close modal
-    setSelectedClass(seatClassId);
-    setIsModalVisible(false);
-    // Find the selected seat class from the fetched flight data
-    const selectedSeatClass = flight.flightSeats.find(
-      (seat) => seat.seatClass.id === seatClassId
-    );
-
-    // Send selected flight data along with the seat class
-    const selectedFlight = {
-      seatClassId: selectedSeatClass.seatClass.id,
-      flightId: flight.id,
-    };
-    console.log("Selected Flight Data:", selectedFlight);
-    // Optionally, navigate to booking screen with selectedFlight data
-    navigation.navigate("Booking", { selectedFlight });
+  const handleClassSelect = (seatClass) => {
+    navigation.navigate("Booking", {
+      selectedFlight: {
+        flightId: flight.id,
+        seatClassId: seatClass.seatClass.id,
+        price: (flight.base_price * seatClass.seatClass.multiplier).toFixed(2),
+        flightDetails: flight
+      }
+    });
   };
 
   if (loading) {
     return (
-      <LinearGradient colors={['#16697A', '#489FB5']} style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FFA62B" />
-        <Text style={styles.loadingText}>Loading flights Details...</Text>
+      <LinearGradient colors={["#0F2027", "#203A43", "#2C5364"]} style={styles.loadingContainer}>
+        <LottieView
+          source={require("../assets/lottie/loading.json")}
+          autoPlay
+          loop
+          style={{ width: 150, height: 150 }}
+        />
+        <Text style={styles.loadingText}>Loading flight details...</Text>
       </LinearGradient>
     );
   }
 
   return (
-    <LinearGradient colors={["#16697A", "#489FB5"]} style={styles.container}>
-      {/* Header Section with Back Button and Flight Details */}
-      <View style={styles.headerContainer}>
-        <TouchableOpacity
+    <LinearGradient colors={["#0F2027", "#203A43", "#2C5364"]} style={styles.container}>
+      {/* Header */}
+      <Animatable.View animation="fadeInDown" duration={800} style={styles.header}>
+        <TouchableOpacity 
+          onPress={() => navigation.goBack()} 
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          activeOpacity={0.7}
         >
-          <Ionicons name="arrow-back" size={24} color="#EDE7E3" />
+          <Ionicons name="arrow-back" size={28} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.heading}>Flight Details</Text>
-      </View>
-
-      {/* ScrollView for centering the rest of the content */}
-      <ScrollView contentContainerStyle={styles.scrollViewContainer}>
-        <View style={styles.flightInfoContainer}>
-          <Text style={styles.flightInfoLabel}>From:</Text>
-          <Text style={styles.flightInfoValue}>
-            {flight.origin.name} ({flight.origin.code})
-          </Text>
+        <View style={styles.headerContent}>
+          <Text style={styles.title}>Flight Details</Text>
+          <Text style={styles.subtitle}>{flight.airline.name} • {flight.flight_number}</Text>
         </View>
+      </Animatable.View>
 
-        <View style={styles.flightInfoContainer}>
-          <Text style={styles.flightInfoLabel}>To:</Text>
-          <Text style={styles.flightInfoValue}>
-            {flight.destination.name} ({flight.destination.code})
-          </Text>
-        </View>
-
-        <View style={styles.flightInfoContainer}>
-          <Text style={styles.flightInfoLabel}>Departure:</Text>
-          <Text style={styles.flightInfoValue}>
-            {new Date(flight.departure_time).toLocaleString()}
-          </Text>
-        </View>
-
-        <View style={styles.flightInfoContainer}>
-          <Text style={styles.flightInfoLabel}>Arrival:</Text>
-          <Text style={styles.flightInfoValue}>
-            {new Date(flight.arrival_time).toLocaleString()}
-          </Text>
-        </View>
-
-        <View style={styles.flightInfoContainer}>
-          <Text style={styles.flightInfoLabel}>Status:</Text>
-          <Text style={styles.flightInfoValue}>{flight.status}</Text>
-        </View>
-
-        {/* Book Now Button */}
-        <View style={styles.buttonContainer}>
-          <Button title="Book Now" onPress={handleBookNow} color="#FFA62B" />
-        </View>
-      </ScrollView>
-
-      {/* Modal for selecting class */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={isModalVisible}
-        onRequestClose={handleCloseModal}
+      <Animated.ScrollView 
+        contentContainerStyle={styles.content}
+        style={{ opacity: fadeAnim }}
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select Seat Class</Text>
-            {/* Economy Class Button */}
-            <Button
-              title={`Economy Class - $${flight.base_price}`}
-              onPress={() =>
-                handleSelectClass(flight.flightSeats[1].seatClass.id)
-              } // Economy seatClassId
-              color="#16697A"
-            />
-            {/* Business Class Button */}
-            <Button
-              title={`Business Class - $${(flight.base_price * 2).toFixed(2)}`} // Multiply by 2 for Business class price
-              onPress={() =>
-                handleSelectClass(flight.flightSeats[0].seatClass.id)
-              } // Business seatClassId
-              color="#16697A"
-            />
-            <Button title="Close" onPress={handleCloseModal} color="#FFA62B" />
+        {/* Flight Summary Card */}
+        <Animatable.View 
+          animation="fadeInUp" 
+          duration={800}
+          delay={200}
+          style={styles.summaryCard}
+        >
+          <View style={styles.airlineHeader}>
+            <View style={styles.airlineLogo}>
+              <Text style={styles.airlineCode}>{flight.airline.code}</Text>
+            </View>
+            <View>
+              <Text style={styles.airlineName}>{flight.airline.name}</Text>
+              <Text style={styles.flightNumber}>Flight #{flight.flight_number}</Text>
+            </View>
           </View>
-        </View>
-      </Modal>
+
+          {/* Route Timeline */}
+          <View style={styles.routeContainer}>
+            <View style={styles.timeBlock}>
+              <Text style={styles.time}>{formatTime(flight.departure_time)}</Text>
+              <Text style={styles.airportCode}>{flight.origin.code}</Text>
+              <Text style={styles.city}>{flight.origin.city}</Text>
+            </View>
+
+            <View style={styles.durationContainer}>
+              <View style={styles.durationLine} />
+              <MaterialCommunityIcons 
+                name="airplane" 
+                size={24} 
+                color="#4FD3DA" 
+                style={styles.airplaneIcon}
+              />
+              <Text style={styles.durationText}>
+                {calculateDuration(flight.departure_time, flight.arrival_time)}
+              </Text>
+              <View style={styles.durationLine} />
+            </View>
+
+            <View style={styles.timeBlock}>
+              <Text style={styles.time}>{formatTime(flight.arrival_time)}</Text>
+              <Text style={styles.airportCode}>{flight.destination.code}</Text>
+              <Text style={styles.city}>{flight.destination.city}</Text>
+            </View>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.dateStatusContainer}>
+            <View style={styles.dateContainer}>
+              <MaterialIcons name="date-range" size={16} color="#4FD3DA" />
+              <Text style={styles.dateText}>{formatDate(flight.departure_time)}</Text>
+            </View>
+            <View style={[
+              styles.statusBadge,
+              flight.status === "On time" ? styles.onTimeBadge : styles.delayedBadge
+            ]}>
+              <Text style={styles.statusText}>{flight.status}</Text>
+            </View>
+          </View>
+        </Animatable.View>
+
+        {/* Flight Details Section */}
+        <Animatable.View 
+          animation="fadeInUp" 
+          duration={800}
+          delay={300}
+          style={styles.detailsSection}
+        >
+          <View style={styles.sectionHeader}>
+            <Ionicons name="information-circle" size={22} color="#2C5364" />
+            <Text style={styles.sectionTitle}>Flight Information</Text>
+          </View>
+
+          <View style={styles.detailsGrid}>
+            <View style={styles.detailItem}>
+              <MaterialIcons name="airplanemode-active" size={20} color="#4FD3DA" />
+              <Text style={styles.detailLabel}>Aircraft</Text>
+              <Text style={styles.detailValue}>Boeing 787</Text>
+            </View>
+
+            <View style={styles.detailItem}>
+              <Ionicons name="time" size={20} color="#4FD3DA" />
+              <Text style={styles.detailLabel}>Duration</Text>
+              <Text style={styles.detailValue}>
+                {calculateDuration(flight.departure_time, flight.arrival_time)}
+              </Text>
+            </View>
+
+            <View style={styles.detailItem}>
+              <MaterialCommunityIcons name="seat-recline-normal" size={20} color="#4FD3DA" />
+              <Text style={styles.detailLabel}>Seats</Text>
+              <Text style={styles.detailValue}>186</Text>
+            </View>
+
+            <View style={styles.detailItem}>
+              <FontAwesome name="plug" size={18} color="#4FD3DA" />
+              <Text style={styles.detailLabel}>Power</Text>
+              <Text style={styles.detailValue}>Available</Text>
+            </View>
+          </View>
+        </Animatable.View>
+
+        {/* Available Classes Section */}
+        <Animatable.View 
+          animation="fadeInUp" 
+          duration={800}
+          delay={400}
+          style={styles.classesSection}
+        >
+          <View style={styles.sectionHeader}>
+            <Ionicons name="pricetags" size={22} color="#2C5364" />
+            <Text style={styles.sectionTitle}>Available Classes</Text>
+          </View>
+
+          {flight.flightSeats.map((seatClass, index) => (
+            <TouchableOpacity
+              key={seatClass.seatClass.id}
+              style={styles.classCard}
+              onPress={() => handleClassSelect(seatClass)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.classInfo}>
+                <Text style={styles.className}>{seatClass.seatClass.name} Class</Text>
+                <Text style={styles.classAvailability}>
+                  {seatClass.available_seats} seats available
+                </Text>
+              </View>
+              <View style={styles.priceContainer}>
+                <Text style={styles.classPrice}>
+                  ${(flight.base_price * seatClass.seatClass.multiplier).toFixed(2)}
+                </Text>
+                <MaterialIcons name="chevron-right" size={24} color="#4FD3DA" />
+              </View>
+            </TouchableOpacity>
+          ))}
+        </Animatable.View>
+      </Animated.ScrollView>
     </LinearGradient>
   );
 }
@@ -169,80 +256,256 @@ export default function FlightDetailsScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    paddingTop: 50,
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loadingText: {
-    fontSize: 18,
-    color: "#EDE7E3",
+    color: '#FFF',
+    fontSize: 16,
+    marginTop: 20,
   },
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 40,
-    marginBottom: 20,
+  header: {
+    padding: 25,
+    paddingTop: 50,
+    paddingBottom: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.2)',
   },
   backButton: {
-    marginRight: 10,
+    marginRight: 15,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
-  heading: {
+  headerContent: {
+    flex: 1,
+  },
+  title: {
     fontSize: 28,
-    fontWeight: "bold",
-    color: "#EDE7E3",
-    textAlign: "center",
-    flex: 1,
+    fontWeight: '700',
+    color: '#FFF',
+    marginBottom: 5,
   },
-  scrollViewContainer: {
-    flexGrow: 1,
-    justifyContent: "center", // Vertically center the content
-    paddingBottom: 40, // Ensure the button is not cut off
+  subtitle: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.8)',
   },
-  flightInfoContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-    paddingVertical: 10,
-  },
-  flightInfoLabel: {
-    fontSize: 18,
-    color: "#EDE7E3",
-    fontWeight: "bold",
-  },
-  flightInfoValue: {
-    fontSize: 18,
-    color: "#EDE7E3",
-    flex: 1,
-    textAlign: "right",
-  },
-  buttonContainer: {
-    marginTop: 30,
-    width: "100%",
-    borderRadius: 10,
-    overflow: "hidden",
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  modalContent: {
-    width: "80%",
+  content: {
     padding: 20,
-    backgroundColor: "#EDE7E3",
-    borderRadius: 10,
-    alignItems: "center",
+    paddingBottom: 100,
   },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#16697A",
-    marginBottom: 10,
+  summaryCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  airlineHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  airlineLogo: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#2C5364',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  airlineCode: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  airlineName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#2C5364',
+  },
+  flightNumber: {
+    fontSize: 14,
+    color: '#4FD3DA',
+    marginTop: 5,
+  },
+  routeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  timeBlock: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  time: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#2C5364',
+    marginBottom: 5,
+  },
+  airportCode: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#4FD3DA',
+    marginBottom: 3,
+  },
+  city: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  durationContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    width: 100,
+  },
+  durationLine: {
+    width: 1,
+    height: 20,
+    backgroundColor: '#4FD3DA',
+    opacity: 0.5,
+  },
+  airplaneIcon: {
+    marginVertical: 5,
+    transform: [{ rotate: '90deg' }],
+  },
+  durationText: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginVertical: 5,
+    fontWeight: '500',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginVertical: 15,
+  },
+  dateStatusContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dateText: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginLeft: 5,
+  },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  onTimeBadge: {
+    backgroundColor: '#D1FAE5',
+  },
+  delayedBadge: {
+    backgroundColor: '#FEE2E2',
+  },
+  statusText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  detailsSection: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#2C5364',
+    marginLeft: 8,
+  },
+  detailsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  detailItem: {
+    width: width * 0.43,
+    marginBottom: 15,
+  },
+  detailLabel: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 5,
+  },
+  detailValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2C5364',
+    marginTop: 3,
+  },
+  classesSection: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  classCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#F5F7FA',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 12,
+  },
+  classInfo: {
+    flex: 1,
+  },
+  className: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2C5364',
+  },
+  classAvailability: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 5,
+  },
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  classPrice: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#4FD3DA',
+    marginRight: 5,
   },
 });
+
+// export default FlightDetailsScreen;

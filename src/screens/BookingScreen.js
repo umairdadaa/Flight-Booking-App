@@ -8,38 +8,35 @@ import {
   ScrollView,
   Alert,
   Modal,
+  Dimensions,
+  Animated,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { AntDesign } from "@expo/vector-icons"; // For icons
-import Animated, {
-  Layout,
-  SlideInUp,
-  SlideOutDown,
-} from "react-native-reanimated";
-import { BlurView } from "expo-blur"; // Import BlurView
+import { MaterialIcons, Ionicons, FontAwesome } from "@expo/vector-icons";
+import * as Animatable from "react-native-animatable";
+
+const { width } = Dimensions.get("window");
 
 const BookingScreen = ({ navigation, route }) => {
   const { selectedFlight } = route.params || {};
-  console.log(selectedFlight);
-
   const [passengers, setPassengers] = useState([
     { fullName: "", passportNumber: "", age: "", expanded: true },
   ]);
   const [modalVisible, setModalVisible] = useState(false);
   const [passengerToRemove, setPassengerToRemove] = useState(null);
 
-  const handlePassengerChange = (index, field, value) => {
-    // If the field is 'age', try to convert it to an integer
-    if (field === "age") {
-      // Only update 'age' if it's a valid number
-      value = parseInt(value, 10);
-      if (isNaN(value)) {
-        // If it's not a valid number, keep it empty or handle the error
-        value = "";
-      }
-    }
+  const calculateTotalPrice = () => {
+    const price =
+      typeof selectedFlight?.price === "number" ? selectedFlight.price : 0;
+    return price * passengers.length;
+  };
 
+  const handlePassengerChange = (index, field, value) => {
     const updatedPassengers = [...passengers];
+    if (field === "age") {
+      value = value ? parseInt(value, 10) : "";
+      if (isNaN(value)) value = "";
+    }
     updatedPassengers[index][field] = value;
     setPassengers(updatedPassengers);
   };
@@ -52,213 +49,289 @@ const BookingScreen = ({ navigation, route }) => {
   };
 
   const toggleExpand = (index) => {
-    const updatedPassengers = passengers.map((passenger, i) => {
-      if (i === index) {
-        return { ...passenger, expanded: !passenger.expanded };
-      } else {
-        return { ...passenger, expanded: false }; // Collapse other passengers
-      }
-    });
+    const updatedPassengers = passengers.map((passenger, i) => ({
+      ...passenger,
+      expanded: i === index ? !passenger.expanded : false,
+    }));
     setPassengers(updatedPassengers);
   };
 
-  // const handleBooking = () => {
-  //   if (passengers.some((p) => !p.fullName || !p.passportNumber || !p.age)) {
-  //     Alert.alert("Please fill out all fields for all passengers");
-  //     return;
-  //   }
-
-  //   const bookingData = {
-  //     flightId: selectedFlight.flightId,
-  //     seatClassId: selectedFlight.seatClassId,
-  //     userId: "uuid1", // Assuming we have a user ID
-  //     passengers: passengers.map(({ expanded, ...info }) => ({
-  //       full_name: info.fullName,
-  //       passport_number: info.passportNumber,
-  //       age: info.age,
-  //     })),
-  //     paymentMethod: "", // Just as an example
-  //   };
-
-  //   console.log("Booking Data:", bookingData);
-
-  //   Alert.alert("Success", "Your flight has been booked!");
-  //   navigation.navigate("Home");
-  // };
-  // Inside the BookingScreen component
   const handleMakePayment = () => {
     if (passengers.some((p) => !p.fullName || !p.passportNumber || !p.age)) {
-      Alert.alert("Please fill out all fields for all passengers");
+      Alert.alert(
+        "Incomplete Information",
+        "Please fill out all fields for all passengers"
+      );
       return;
     }
     const bookingData = {
+      userId: "uuid1",
       flightId: selectedFlight.flightId,
       seatClassId: selectedFlight.seatClassId,
-      userId: "uuid1", // Assuming we have a user ID
       passengers: passengers.map(({ expanded, ...info }) => ({
         full_name: info.fullName,
         passport_number: info.passportNumber,
         age: info.age,
       })),
-      paymentMethod: "paymentMethod", // Set payment method based on user's selection
     };
-
-    const { full_name } = bookingData.passengers[0];
-    console.log(full_name);
-
-    // Navigate to the payment page and pass bookingData
-    navigation.navigate("PaymentPage", { bookingData,full_name });
+    navigation.navigate("PaymentPage", {
+      bookingData,
+      full_name: bookingData.passengers[0].full_name,
+    });
   };
 
-  const removePassenger = (index) => {
-    if (passengers.length > 1) {
-      const updatedPassengers = passengers.filter((_, i) => i !== index);
-      setPassengers(updatedPassengers);
-      setModalVisible(false); // Close the modal
-    } else {
+  const confirmRemovePassenger = (index) => {
+    if (passengers.length <= 1) {
       Alert.alert("Error", "You must have at least one passenger.");
+      return;
     }
-  };
-
-  const openRemoveModal = (index) => {
-    setPassengerToRemove(index);
-    setModalVisible(true);
+    setPassengers(passengers.filter((_, i) => i !== index));
+    setModalVisible(false);
   };
 
   return (
-    <LinearGradient colors={["#16697A", "#489FB5"]} style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        <Text style={styles.title}>Passenger Details</Text>
+    <LinearGradient
+      colors={["#0F2027", "#203A43", "#2C5364"]}
+      style={styles.container}
+    >
+      {/* Header */}
+      <Animatable.View
+        animation="fadeInDown"
+        duration={800}
+        style={styles.header}
+      >
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+          activeOpacity={0.7}
+        >
+          <MaterialIcons name="arrow-back" size={28} color="#FFF" />
+        </TouchableOpacity>
+        <View style={styles.headerContent}>
+          <Text style={styles.title}>Passenger Details</Text>
+          <Text style={styles.subtitle}>Complete booking information</Text>
+        </View>
+      </Animatable.View>
+
+      {/* Content */}
+      <ScrollView contentContainerStyle={styles.content}>
+        <Animatable.View
+          animation="fadeInUp"
+          duration={800}
+          delay={200}
+          style={styles.flightInfoCard}
+        >
+          <View style={styles.flightHeader}>
+            <Text style={styles.flightTitle}>Flight Summary</Text>
+            <Text style={styles.flightPrice}>
+              $
+              {typeof selectedFlight?.price === "number"
+                ? selectedFlight.price.toFixed(2)
+                : "0.00"}
+            </Text>
+          </View>
+          <View style={styles.flightDetails}>
+            <View style={styles.detailRow}>
+              <MaterialIcons name="flight" size={20} color="#4FD3DA" />
+              <Text style={styles.detailLabel}>Flight:</Text>
+              <Text style={styles.detailValue}>
+                #{selectedFlight?.flightDetails?.flight_number}
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Ionicons name="airplane" size={20} color="#4FD3DA" />
+              <Text style={styles.detailLabel}>Class:</Text>
+              <Text style={styles.detailValue}>
+                {selectedFlight?.seatClass}
+              </Text>
+            </View>
+          </View>
+        </Animatable.View>
+
+        {/* Passenger Section */}
+        <Text style={styles.sectionTitle}>Passenger Information</Text>
 
         {passengers.map((passenger, index) => (
-          <Animated.View
+          <Animatable.View
             key={index}
+            animation="fadeInUp"
+            duration={800}
+            delay={300 + index * 100}
             style={styles.passengerCard}
-            layout={Layout.springify()} // Smooth layout transition
-            entering={SlideInUp}
-            exiting={SlideOutDown}
           >
             <TouchableOpacity
               onPress={() => toggleExpand(index)}
               style={styles.passengerHeader}
               activeOpacity={0.8}
             >
+              <View style={styles.passengerIcon}>
+                <Ionicons name="person" size={20} color="#2C5364" />
+              </View>
               <Text style={styles.passengerTitle}>
-                {passenger.fullName
-                  ? passenger.fullName.split(" ")[0]
-                  : `Passenger ${index + 1}`}
+                {passenger.fullName || `Passenger ${index + 1}`}
               </Text>
-              <AntDesign
-                name={passenger.expanded ? "up" : "down"}
+              <Ionicons
+                name={passenger.expanded ? "chevron-up" : "chevron-down"}
                 size={20}
-                color="#EDE7E3"
+                color="#4FD3DA"
               />
             </TouchableOpacity>
 
             {passenger.expanded && (
-              <BlurView intensity={50} style={styles.passengerContent}>
+              <Animatable.View
+                animation="fadeIn"
+                duration={500}
+                style={styles.passengerForm}
+              >
                 <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Full Name</Text>
+                  <FontAwesome
+                    name="user"
+                    size={16}
+                    color="#4FD3DA"
+                    style={styles.inputIcon}
+                  />
                   <TextInput
                     value={passenger.fullName}
                     onChangeText={(text) =>
                       handlePassengerChange(index, "fullName", text)
                     }
                     style={styles.input}
-                    placeholder="Enter full name"
-                    placeholderTextColor="#aaa"
+                    placeholder="Full Name"
+                    placeholderTextColor="#AAA"
                   />
                 </View>
 
                 <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Passport Number</Text>
+                  <FontAwesome
+                    name="id-card"
+                    size={16}
+                    color="#4FD3DA"
+                    style={styles.inputIcon}
+                  />
                   <TextInput
                     value={passenger.passportNumber}
                     onChangeText={(text) =>
                       handlePassengerChange(index, "passportNumber", text)
                     }
                     style={styles.input}
-                    placeholder="Enter passport number"
-                    placeholderTextColor="#aaa"
+                    placeholder="Passport Number"
+                    placeholderTextColor="#AAA"
                   />
                 </View>
 
                 <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Age</Text>
+                  <FontAwesome
+                    name="birthday-cake"
+                    size={16}
+                    color="#4FD3DA"
+                    style={styles.inputIcon}
+                  />
                   <TextInput
                     value={passenger.age}
                     onChangeText={(text) =>
                       handlePassengerChange(index, "age", text)
                     }
                     style={styles.input}
-                    placeholder="Enter age"
-                    placeholderTextColor="#aaa"
+                    placeholder="Age"
+                    placeholderTextColor="#AAA"
                     keyboardType="numeric"
                   />
                 </View>
-              </BlurView>
-            )}
 
-            {/* Trash Icon to remove passenger */}
-            <TouchableOpacity
-              style={styles.removeIcon}
-              onPress={() => openRemoveModal(index)}
-            >
-              <AntDesign name="delete" size={24} color="red" />
-            </TouchableOpacity>
-          </Animated.View>
+                {passengers.length > 1 && (
+                  <TouchableOpacity
+                    style={styles.removeButton}
+                    onPress={() => {
+                      setPassengerToRemove(index);
+                      setModalVisible(true);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.removeButtonText}>
+                      Remove Passenger
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </Animatable.View>
+            )}
+          </Animatable.View>
         ))}
 
-        <TouchableOpacity style={styles.addButton} onPress={addPassenger}>
-          <Text style={styles.addButtonText}>+ Add Passenger</Text>
-        </TouchableOpacity>
-
-        {/* <TouchableOpacity style={styles.button} onPress={handleBooking}>
-          <Text style={styles.buttonText}>Confirm Booking</Text>
-        </TouchableOpacity> */}
-        <TouchableOpacity style={styles.button} onPress={handleMakePayment}>
-          <Text style={styles.buttonText}>Confirm Booking</Text>
-        </TouchableOpacity>
-        {/* <TouchableOpacity
-          style={styles.button}
-          onPress={() =>
-            navigation.navigate("PaymentPage", {
-              selectedFlight: selectedFlight,
-            })
-          }
+        <Animatable.View
+          animation="fadeInUp"
+          duration={800}
+          delay={400 + passengers.length * 100}
         >
-          <Text style={styles.buttonText}>Make Payment</Text>
-        </TouchableOpacity> */}
+          <TouchableOpacity
+            style={styles.addPassengerButton}
+            onPress={addPassenger}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="add" size={24} color="#4FD3DA" />
+            <Text style={styles.addPassengerText}>Add Passenger</Text>
+          </TouchableOpacity>
+        </Animatable.View>
       </ScrollView>
 
-      {/* Modal for confirming passenger removal */}
+      {/* Footer */}
+      <Animatable.View
+        animation="fadeInUp"
+        duration={800}
+        delay={500 + passengers.length * 100}
+        style={styles.footer}
+      >
+        <View style={styles.totalContainer}>
+          <Text style={styles.totalText}>Total</Text>
+          <Text style={styles.totalPrice}>
+            ${calculateTotalPrice().toFixed(2)}
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={styles.paymentButton}
+          onPress={handleMakePayment}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.paymentButtonText}>Continue to Payment</Text>
+          <Ionicons name="arrow-forward" size={20} color="#FFF" />
+        </TouchableOpacity>
+      </Animatable.View>
+
+      {/* Remove Passenger Modal */}
       <Modal
         visible={modalVisible}
-        transparent={true}
+        transparent
         animationType="fade"
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Are you sure?</Text>
-            <Text style={styles.modalMessage}>
-              Do you want to remove this passenger?
+        <View style={styles.modalContainer}>
+          <Animatable.View
+            animation="fadeInUp"
+            duration={300}
+            style={styles.modalContent}
+          >
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Remove Passenger</Text>
+            </View>
+            <Text style={styles.modalText}>
+              Are you sure you want to remove this passenger from your booking?
             </Text>
-            <View style={styles.modalButtons}>
+            <View style={styles.modalActions}>
               <TouchableOpacity
-                style={styles.modalButton}
+                style={styles.modalCancel}
                 onPress={() => setModalVisible(false)}
+                activeOpacity={0.7}
               >
-                <Text style={styles.modalButtonText}>Cancel</Text>
+                <Text style={styles.modalCancelText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.modalButton}
-                onPress={() => removePassenger(passengerToRemove)}
+                style={styles.modalConfirm}
+                onPress={() => confirmRemovePassenger(passengerToRemove)}
+                activeOpacity={0.7}
               >
-                <Text style={styles.modalButtonText}>Confirm</Text>
+                <Text style={styles.modalConfirmText}>Remove</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </Animatable.View>
         </View>
       </Modal>
     </LinearGradient>
@@ -268,134 +341,279 @@ const BookingScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
   },
-  scrollViewContent: {
-    flexGrow: 1,
-    paddingVertical: 20,
+  header: {
+    padding: 25,
+    paddingTop: 50,
+    paddingBottom: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.2)",
+  },
+  backButton: {
+    marginRight: 15,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.2)",
+  },
+  headerContent: {
+    flex: 1,
   },
   title: {
     fontSize: 28,
-    fontWeight: "bold",
-    color: "#EDE7E3",
-    textAlign: "center",
-    marginBottom: 20,
+    fontWeight: "700",
+    color: "#FFF",
+    marginBottom: 5,
   },
-  passengerCard: {
-    marginBottom: 20,
-    borderRadius: 12,
-    backgroundColor: "#EDE7E3",
-    overflow: "hidden",
+  subtitle: {
+    fontSize: 14,
+    color: "rgba(255,255,255,0.8)",
+  },
+  content: {
+    padding: 20,
+    paddingBottom: 120,
+  },
+  flightInfoCard: {
+    backgroundColor: "#FFF",
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 25,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
     elevation: 5,
   },
-  passengerHeader: {
+  flightHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#489FB5",
-    paddingVertical: 15,
-    paddingHorizontal: 20,
+    marginBottom: 15,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
   },
-  passengerTitle: {
+  flightTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#EDE7E3",
+    color: "#2C5364",
   },
-  passengerContent: {
-    padding: 20,
-    backgroundColor: "transparent", // Set the background to transparent
+  flightPrice: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#4FD3DA",
   },
-  inputContainer: {
-    marginBottom: 15,
-  },
-  label: {
-    fontSize: 14,
-    color: "#555",
-    marginBottom: 5,
-  },
-  input: {
-    height: 50,
-    borderColor: "#ccc",
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    fontSize: 16,
-    backgroundColor: "#fff",
-    color: "#333",
-  },
-  addButton: {
-    backgroundColor: "#16697A",
-    paddingVertical: 14,
-    borderRadius: 30,
-    alignItems: "center",
-    marginVertical: 10,
-  },
-  addButtonText: {
-    color: "#FFF",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  button: {
-    backgroundColor: "#FFA62B",
-    paddingVertical: 16,
-    borderRadius: 30,
-    alignItems: "center",
+  flightDetails: {
     marginTop: 10,
   },
-  buttonText: {
-    color: "#FFF",
-    fontSize: 18,
-    fontWeight: "bold",
+  detailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
   },
-  removeIcon: {
-    position: "absolute",
-    right: 10,
-    top: 10,
+  detailLabel: {
+    fontSize: 15,
+    color: "#6B7280",
+    marginLeft: 8,
+    marginRight: 12,
+    fontWeight: "500",
+  },
+  detailValue: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#2C5364",
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#FFF",
+    marginBottom: 20,
+    marginLeft: 5,
+  },
+  passengerCard: {
     backgroundColor: "#FFF",
-    padding: 5,
-    borderRadius: 50,
+    borderRadius: 16,
+    marginBottom: 15,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  passengerHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+  },
+  passengerIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#EFF6FF",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  passengerTitle: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#2C5364",
+  },
+  passengerForm: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F5F7FA",
+    borderRadius: 12,
+    paddingHorizontal: 15,
+    marginBottom: 15,
+  },
+  inputIcon: {
+    marginRight: 10,
+  },
+  input: {
+    flex: 1,
+    height: 50,
+    fontSize: 16,
+    color: "#333",
+  },
+  removeButton: {
+    alignSelf: "flex-end",
+    padding: 8,
+  },
+  removeButtonText: {
+    color: "#EF4444",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  addPassengerButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#4FD3DA",
+    borderStyle: "dashed",
+    marginTop: 10,
+  },
+  addPassengerText: {
+    color: "#4FD3DA",
+    fontSize: 16,
+    fontWeight: "600",
+    marginLeft: 8,
+  },
+  footer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#FFF",
+    padding: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -5 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  totalContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 15,
+  },
+  totalText: {
+    fontSize: 16,
+    color: "#6B7280",
+    fontWeight: "500",
+  },
+  totalPrice: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#2C5364",
+  },
+  paymentButton: {
+    backgroundColor: "#4FD3DA",
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#4FD3DA",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
     elevation: 5,
   },
-  modalOverlay: {
+  paymentButtonText: {
+    color: "#FFF",
+    fontSize: 18,
+    fontWeight: "600",
+    marginRight: 10,
+  },
+  modalContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   modalContent: {
-    width: 300,
+    width: width - 40,
+    backgroundColor: "#FFF",
+    borderRadius: 16,
+    overflow: "hidden",
+  },
+  modalHeader: {
     padding: 20,
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    alignItems: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#2C5364",
+    textAlign: "center",
   },
-  modalMessage: {
+  modalText: {
+    padding: 20,
     fontSize: 16,
-    marginBottom: 20,
+    color: "#6B7280",
+    textAlign: "center",
+    lineHeight: 24,
   },
-  modalButtons: {
+  modalActions: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    width: "100%",
+    borderTopWidth: 1,
+    borderTopColor: "#E5E7EB",
   },
-  modalButton: {
-    backgroundColor: "#489FB5",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+  modalCancel: {
+    flex: 1,
+    padding: 16,
+    borderRightWidth: 1,
+    borderRightColor: "#E5E7EB",
   },
-  modalButtonText: {
-    color: "#fff",
-    fontSize: 16,
+  modalCancelText: {
+    textAlign: "center",
+    color: "#4FD3DA",
+    fontWeight: "600",
+  },
+  modalConfirm: {
+    flex: 1,
+    padding: 16,
+  },
+  modalConfirmText: {
+    textAlign: "center",
+    color: "#EF4444",
+    fontWeight: "600",
   },
 });
 

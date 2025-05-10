@@ -1,51 +1,166 @@
-import React from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import React, { useState, useRef } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Dimensions,
+  Animated,
+} from "react-native";
+import Swiper from "react-native-swiper";
 import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
+import * as Animatable from "react-native-animatable";
+
+import onboarding_img_1 from "../assets/images/onboarding/slide-1.png";
+import onboarding_img_2 from "../assets/images/onboarding/slide-2.png";
+import onboarding_img_3 from "../assets/images/onboarding/slide-3.png";
+import onboarding_img_4 from "../assets/images/onboarding/welcome.png";
+
+const { width, height } = Dimensions.get("window");
+
+const slides = [
+  {
+    id: 1,
+    image: onboarding_img_1,
+    title: "Discover Amazing Destinations",
+    description:
+      "Explore the world's most beautiful places with our curated selection of travel destinations.",
+    icon: "location",
+  },
+  {
+    id: 2,
+    image: onboarding_img_2,
+    title: "Easy Flight Booking",
+    description:
+      "Book your flights in just a few taps with our intuitive booking system.",
+    icon: "airplane",
+  },
+  {
+    id: 3,
+    image: onboarding_img_3,
+    title: "Personalized Experience",
+    description:
+      "Get recommendations tailored to your travel preferences and style.",
+    icon: "heart",
+  },
+  {
+    id: 4,
+    image: onboarding_img_4,
+    title: "Ready to Explore?",
+    description:
+      "Start your journey with us and experience travel like never before.",
+    icon: "rocket",
+  },
+];
 
 const HomeScreen = ({ navigation }) => {
-  React.useLayoutEffect(() => {
-    navigation.setOptions({
-      headerShown: false, // Hide the default header
+  const swiperRef = useRef(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  const handleSkip = () => {
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      swiperRef.current.scrollBy(slides.length - 1 - currentIndex);
+      fadeAnim.setValue(1);
     });
-  }, [navigation]);
+  };
+
+  const handleGetStarted = () => {
+    navigation.navigate("SearchFlightsScreen");
+  };
 
   return (
-    <LinearGradient colors={["#16697A", "#489FB5"]} style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Welcome to Your Luxurious Journey</Text>
-      </View>
-
-      {/* Image section */}
-      <View style={styles.imageContainer}>
-        <Image
-          source={{
-            uri: "https://www.freeiconspng.com/uploads/plane-travel-flight-tourism-travel-icon-png-10.png",
-          }}
-          style={styles.image}
-        />
-      </View>
-
-      <View style={styles.content}>
-        <Text style={styles.title}>Find the Best Flights</Text>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigation.navigate("SearchFlightsScreen")}
-        >
-          <Text style={styles.buttonText}>Start Booking</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Smaller, Subtle Menu Button with adjusted width */}
-      <TouchableOpacity
-        style={styles.menuButton}
-        onPress={() => navigation.navigate("MenuScreen")}
+    <LinearGradient
+      colors={["#0F2027", "#203A43", "#2C5364"]}
+      style={styles.container}
+    >
+      <Swiper
+        ref={swiperRef}
+        loop={false}
+        showsPagination={false}
+        onIndexChanged={(index) => setCurrentIndex(index)}
       >
-        <Text style={styles.menuButtonText}>Menu</Text>
-      </TouchableOpacity>
+        {slides.map((slide, index) => (
+          <View style={styles.slide} key={slide.id}>
+            <Image source={slide.image} style={styles.image} />
+            <LinearGradient
+              colors={["rgba(15, 32, 39, 0.8)", "rgba(15, 32, 39, 0.4)"]}
+              style={styles.overlay}
+            />
 
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>Made by Umair Dada</Text>
+            <View style={styles.content}>
+              <Animatable.View
+                animation="fadeInDown"
+                duration={800}
+                style={styles.iconContainer}
+              >
+                <Ionicons
+                  name={slide.icon}
+                  size={40}
+                  color="#4FD3DA"
+                  style={styles.icon}
+                />
+              </Animatable.View>
+
+              <Animatable.View animation="fadeInUp" duration={800} delay={200}>
+                <Text style={styles.title}>{slide.title}</Text>
+                <Text style={styles.description}>{slide.description}</Text>
+              </Animatable.View>
+
+              {index === slides.length - 1 && (
+                <Animatable.View
+                  animation="fadeInUp"
+                  duration={800}
+                  delay={400}
+                  style={styles.finalButtons}
+                >
+                  <TouchableOpacity
+                    style={styles.getStartedButton}
+                    onPress={handleGetStarted}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.buttonText}>Get Started</Text>
+                    <Ionicons name="arrow-forward" size={20} color="#FFF" />
+                  </TouchableOpacity>
+                </Animatable.View>
+              )}
+            </View>
+          </View>
+        ))}
+      </Swiper>
+
+      {/* Custom Pagination */}
+      <View style={styles.pagination}>
+        {slides.map((_, index) => (
+          <View
+            key={index}
+            style={[
+              styles.paginationDot,
+              index === currentIndex && styles.paginationDotActive,
+            ]}
+          />
+        ))}
       </View>
+
+      {/* Skip Button */}
+      {currentIndex !== slides.length - 1 && (
+        <Animated.View style={[styles.bottomBar, { opacity: fadeAnim }]}>
+          <TouchableOpacity
+            onPress={handleSkip}
+            style={styles.skipButton}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.skipText}>Skip</Text>
+            <Ionicons name="arrow-forward" size={20} color="#FFF" />
+          </TouchableOpacity>
+        </Animated.View>
+      )}
     </LinearGradient>
   );
 };
@@ -53,77 +168,111 @@ const HomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 150,
   },
-  header: {
-    alignItems: "center",
-  },
-  headerText: {
-    fontSize: 30,
-    fontWeight: "bold",
-    color: "#EDE7E3",
-    textAlign: "center",
-  },
-  imageContainer: {
-    alignItems: "center",
-    marginVertical: 50,
+  slide: {
+    width,
+    height,
+    position: "relative",
   },
   image: {
-    width: 250,
-    height: 250,
-    resizeMode: "contain",
+    width,
+    height,
+    position: "absolute",
+    resizeMode: "cover",
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
   },
   content: {
-    alignItems: "center",
     flex: 1,
     justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 40,
+    paddingBottom: 120,
+  },
+  iconContainer: {
+    backgroundColor: "rgba(79, 211, 218, 0.2)",
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 30,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "600",
-    color: "#EDE7E3",
-    marginBottom: 30,
-    marginTop: -150,
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#FFF",
+    marginBottom: 20,
+    textAlign: "center",
+    lineHeight: 36,
   },
-  button: {
-    backgroundColor: "#FFA62B",
-    paddingVertical: 15,
-    paddingHorizontal: 40,
-    borderRadius: 25,
+  description: {
+    fontSize: 16,
+    color: "rgba(255, 255, 255, 0.8)",
+    textAlign: "center",
+    lineHeight: 24,
+    paddingHorizontal: 20,
+  },
+  pagination: {
+    position: "absolute",
+    bottom: 100,
+    flexDirection: "row",
+    alignSelf: "center",
+  },
+  paginationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
+    marginHorizontal: 5,
+  },
+  paginationDotActive: {
+    width: 20,
+    backgroundColor: "#4FD3DA",
+  },
+  bottomBar: {
+    position: "absolute",
+    bottom: 40,
+    right: 30,
+  },
+  skipButton: {
+    flexDirection: "row",
     alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+  },
+  skipText: {
+    color: "#FFF",
+    fontSize: 16,
+    fontWeight: "500",
+    marginRight: 5,
+  },
+  finalButtons: {
+    marginTop: 50,
+    width: "100%",
+    alignItems: "center",
+  },
+  getStartedButton: {
+    backgroundColor: "#4FD3DA",
+    paddingVertical: 16,
+    paddingHorizontal: 40,
+    borderRadius: 30,
+    flexDirection: "row",
+    alignItems: "center",
+    shadowColor: "#4FD3DA",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   buttonText: {
-    color: "#EDE7E3",
+    color: "#FFF",
     fontSize: 18,
-    fontWeight: "bold",
-  },
-  // Smaller and Subtle Menu Button with adjusted width
-  menuButton: {
-    backgroundColor: "#16697A",
-    paddingVertical: 10,
-    paddingHorizontal: 30,
-    borderRadius: 20,
-    alignItems: "center",
-    marginTop: 15, // Adjusted spacing
-    borderWidth: 1,
-    borderColor: "#EDE7E3",
-    width: "auto", // Ensures button width is auto to fit content
-    alignSelf: "center", // Centers the button horizontally
-  },
-  menuButtonText: {
-    color: "#EDE7E3",
-    fontSize: 14, // Reduced font size
-    fontWeight: "500", // Lightened the text for a more subtle feel
-  },
-  footer: {
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  footerText: {
-    fontSize: 16,
-    color: "#EDE7E3",
+    fontWeight: "600",
+    marginRight: 10,
   },
 });
 

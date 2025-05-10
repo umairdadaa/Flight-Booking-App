@@ -2,7 +2,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://127.0.0.1:3000/api", // Replace with your actual IP
+  // baseURL: "https://flight-booking-backend-04p7.onrender.com/api", // Replace with your actual IP
+  baseURL: "http://127.0.0.1:3500/api", // Replace with your actual IP
 });
 
 export default api;

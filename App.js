@@ -14,13 +14,27 @@ import MenuScreen from "./src/screens/MenuScreen";
 import ViewBookingScreen from "./src/screens/ViewBookingScreen";
 import CancelBookingScreen from "./src/screens/CancelBookingScreen";
 import CheckInScreen from "./src/screens/CheckInScreen";
+import SplashScreen from "./src/screens/SplashScreen";
 const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home">
-        <Stack.Screen name="Home" component={HomeScreen} />
+      <Stack.Navigator
+        screenOptions={{ headerShown: false }}
+        initialRouteName="SplashScreen"
+      >
+        <Stack.Screen
+          name="SplashScreen"
+          component={SplashScreen}
+          screenOptions={{ headerShown: false }}
+        />
+
+        <Stack.Screen
+          name="Home"
+          component={HomeScreen}
+          options={{ headerShown: false }}
+        />
         <Stack.Screen name="Flights" component={FlightListScreen} />
         <Stack.Screen name="FlightDetails" component={FlightDetailsScreen} />
         <Stack.Screen name="Booking" component={BookingScreen} />
